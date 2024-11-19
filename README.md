@@ -14,7 +14,7 @@
 
 结果展示：
 
-<img width="734" alt="preview" src="https://github.com/user-attachments/assets/d93a2592-1bfb-404f-9122-62928bb32658">
+<img width="735" alt="结果" src="https://github.com/user-attachments/assets/83eb2eda-077e-4241-b8e0-f0d024990809">
 
 *能够在mod设置里设置艺术标签页的大小。
 
