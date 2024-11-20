@@ -16,7 +16,7 @@
 
 <img width="735" alt="结果" src="https://github.com/user-attachments/assets/3cb68825-570e-40fc-8f2f-81cbcd33f1dd">
 
-太长了可以往下拉：
+太长了可以往下拉或者拖动右边的滑动条往下拉：
 
 <img width="735" alt="下拉" src="https://github.com/user-attachments/assets/88de40ac-b03a-48f4-a0fe-1468e804ab8e">
 
