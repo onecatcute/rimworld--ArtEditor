@@ -1,10 +1,10 @@
-*修改艺术的作者、标题和描述。
+*修改艺术的标题、作者和描述。
 
-修改作者：
+修改标题：
 
 <img width="382" alt="标题" src="https://github.com/user-attachments/assets/b59d4aea-4996-4968-a873-80e56b324038">
 
-修改标题：
+修改作者：
 
 <img width="383" alt="作者" src="https://github.com/user-attachments/assets/1f29ff9e-4a84-492f-bccb-3e3362312384">
 
