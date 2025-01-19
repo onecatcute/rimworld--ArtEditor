@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using HarmonyLib;
@@ -38,6 +38,11 @@ namespace ArtEditor
             Widgets.Label(new Rect(0f, 0f, inRect.width, 30f), "输入新的标题".Translate()); // 在窗口顶部显示标题输入提示
             newTitle = Widgets.TextField(new Rect(0f, 40f, inRect.width, 30f), newTitle); // 绘制文本输入框，用于输入新标题
 
+            if (newTitle.Length >= 200)// 检查新标题的长度是否等于或超过200个字符
+            {
+                Messages.Message("标题的最大长度为200字符".Translate(), MessageTypeDefOf.RejectInput, false);// 准备一条消息，告知标题的最大长度限制，
+                newTitle = newTitle.Substring(0, 200); // 如果标题超长，则截断文本，使其仅包含前200个字符
+            }
             if (Widgets.ButtonText(new Rect(0f, 90f, inRect.width / 2f - 10f, 30f), "保存".Translate())) // 绘制保存按钮
             {
                 if (newTitle.EndsWith(" ")) // 如果新标题以空格结尾
@@ -91,6 +96,11 @@ namespace ArtEditor
             Widgets.Label(new Rect(0f, 0f, inRect.width, 30f), "输入新的作者".Translate()); // 在窗口顶部显示作者输入提示
             newAuthor = Widgets.TextField(new Rect(0f, 40f, inRect.width, 30f), newAuthor); // 绘制文本输入框，用于输入新作者名
 
+            if (newAuthor.Length >= 200)// 检查新作者的长度是否等于或超过200个字符
+            {
+                Messages.Message("作者的最大长度为200字符".Translate(), MessageTypeDefOf.RejectInput, false);// 准备一条消息，告知作者的最大长度限制
+                newAuthor = newAuthor.Substring(0, 200); // 如果作者超长，则截断文本，使其仅包含前200个字符
+            }
             if (Widgets.ButtonText(new Rect(0f, 90f, inRect.width / 2f - 10f, 30f), "保存".Translate())) // 绘制保存按钮
             {
                 if (string.IsNullOrWhiteSpace(newAuthor)) // 如果新作者名为空或仅包含空白字符
@@ -132,7 +142,7 @@ namespace ArtEditor
 
         public override void DoWindowContents(Rect inRect) // 重写方法，绘制窗口内容
         {
-            Widgets.Label(new Rect(0f, 0f, inRect.width, 30f), "输入新的内容".Translate()); // 在窗口顶部显示描述输入提示
+            Widgets.Label(new Rect(0f, 0f, inRect.width, 30f), "输入新的描述".Translate()); // 在窗口顶部显示描述输入提示
 
             Rect textAreaRect = new Rect(0f, 40f, inRect.width + 10f, inRect.height - 80f); // 定义文本区域的显示矩形
             float contentHeight = Text.CalcHeight(newDescription, textAreaRect.width - 16f) + 80f; // 计算描述内容所需的总高度
@@ -140,6 +150,11 @@ namespace ArtEditor
 
             Widgets.BeginScrollView(textAreaRect, ref scrollPosition, contentRect); // 开始滚动视图
             newDescription = Widgets.TextArea(contentRect, newDescription); // 绘制文本输入区域
+            if (newDescription.Length >= 30000)// 检查新描述的长度是否等于或超过30000个字符
+            {
+                Messages.Message("描述的最大长度为30000字符".Translate(), MessageTypeDefOf.RejectInput, false);// 准备一条消息，告知描述的最大长度限制
+                newDescription.Substring(0, 30000);// 如果描述超长，则截断文本，使其仅包含前30000个字符
+            }
             Widgets.EndScrollView(); // 结束滚动视图
 
             if (Widgets.ButtonText(new Rect(0f, inRect.height - 30f, inRect.width / 2f - 10f, 30f), "保存".Translate())) // 绘制保存按钮
@@ -178,7 +193,7 @@ namespace ArtEditor
 
     public class ArtEditorMod : Mod // 定义一个类，用于初始化和管理艺术编辑器模组
     {
-        private ArtEditorSettings settings; // 存储模组的设置
+        private readonly ArtEditorSettings settings; // 存储模组的设置
         private string widthBuffer; // 缓存宽度输入框的内容
         private string heightBuffer; // 缓存高度输入框的内容
 
@@ -217,24 +232,9 @@ namespace ArtEditor
     {
         public static void Postfix(CompArt __instance) // 在 PostExposeData 方法执行后调用
         {
-            if (Scribe.mode == LoadSaveMode.Saving) // 如果当前是保存存档模式
-            {
-                CompArt_GenerateImageDescription_Patch.CleanupUnusedDescriptions(); // 清理未使用的描述
-                string description = CompArt_GenerateImageDescription_Patch.GetDescription(__instance); // 获取当前艺术组件的描述
-                if (!string.IsNullOrEmpty(description)) // 如果描述不为空
-                {
-                    Scribe_Values.Look(ref description, "DescriptionOverride", defaultValue: string.Empty); // 保存描述
-                }
-            }
-            else if (Scribe.mode == LoadSaveMode.LoadingVars) // 如果当前是加载存档模式
-            {
-                string description = null; // 初始化描述变量
-                Scribe_Values.Look(ref description, "DescriptionOverride", defaultValue: string.Empty); // 加载描述
-                if (!string.IsNullOrEmpty(description)) // 如果加载到的描述不为空
-                {
-                    CompArt_GenerateImageDescription_Patch.SetDescription(__instance, description); // 设置描述到组件
-                }
-            }
+            string description = CompArt_GenerateImageDescription_Patch.GetDescription(__instance);// 获取当前艺术组件的描述
+            Scribe_Values.Look(ref description, "DescriptionOverride", defaultValue: string.Empty);// 序列化描述
+            CompArt_GenerateImageDescription_Patch.SetDescription(__instance, description);// 设置描述到组件
         }
     }
 
@@ -258,17 +258,6 @@ namespace ArtEditor
             return true; // 继续执行原始方法
         }
 
-        public static void CleanupUnusedDescriptions() // 清理未使用的描述
-        {
-            foreach (var compArt in descriptions.Keys.ToList()) // 遍历描述字典的键
-            {
-                if (compArt == null || compArt.parent == null) // 如果组件或其父对象为空
-                {
-                    descriptions.Remove(compArt); // 移除对应的描述
-                }
-            }
-        }
-
         public static void ClearAllDescriptions() // 清空所有描述
         {
             descriptions.Clear(); // 清空字典
@@ -280,37 +269,47 @@ namespace ArtEditor
     {
         static void Postfix(ThingComp __instance, ref IEnumerable<Gizmo> __result) // 在方法执行后调用
         {
-            if (__instance is CompArt compArt && compArt.CanShowArt && compArt.Active) // 如果组件是艺术组件且可显示艺术品
+            if (__instance is CompArt compArt)// 如果组件是艺术组件
             {
-                __result = __result.Concat(new Gizmo[] // 向 Gizmo 列表添加新的选项
+                // 如果该艺术组件是石碑且未激活
+                if (compArt.parent.ThingID.StartsWith("Stele") && !compArt.Active)
                 {
-                CreateGizmo("编辑标题", "编辑此艺术品的标题", () => Find.WindowStack.Add(new Dialog_EditArtTitle(compArt))), // 编辑标题
-                CreateGizmo("编辑作者", "编辑此艺术品的作者", () => Find.WindowStack.Add(new Dialog_EditArtAuthor(compArt))), // 编辑作者
-                CreateGizmo("编辑描述", "编辑此艺术品的描述", () => Find.WindowStack.Add(new Dialog_EditArtDescription(compArt))) // 编辑描述
-                });
+                    // 激活艺术组件
+                    compArt.InitializeArt(null);
+                }
 
-                if (DebugSettings.godMode) // 如果当前启用了上帝模式
+                if (compArt.CanShowArt && compArt.Active) // 如果艺术组件可显示艺术且激活
                 {
-                    __result = __result.Concat(new Gizmo[] // 向 Gizmo 列表添加清空描述的选项
+                    __result = __result.Concat(new Gizmo[]
                     {
-                    CreateGizmo("清空描述", "清空所有修改的描述", () =>
-                    {
-                        CompArt_GenerateImageDescription_Patch.ClearAllDescriptions(); // 清空描述
-                        Messages.Message("所有描述已被清空".Translate(), MessageTypeDefOf.PositiveEvent); // 显示成功消息
-                    })
+                    CreateGizmo("编辑标题", "编辑此艺术品的标题", () => Find.WindowStack.Add(new Dialog_EditArtTitle(compArt))),// 编辑标题
+                    CreateGizmo("编辑作者", "编辑此艺术品的作者", () => Find.WindowStack.Add(new Dialog_EditArtAuthor(compArt))),// 编辑作者
+                    CreateGizmo("编辑描述", "编辑此艺术品的描述", () => Find.WindowStack.Add(new Dialog_EditArtDescription(compArt)))// 编辑描述
                     });
+
+                    if (DebugSettings.godMode) // 如果当前启用了上帝模式
+                    {
+                        __result = __result.Concat(new Gizmo[]  // 向 Gizmo 列表添加重置所有描述的选项
+                        {
+                        CreateGizmo("重置所有描述", "还原所有已修改的描述", () =>
+                        {
+                            CompArt_GenerateImageDescription_Patch.ClearAllDescriptions(); // 清空描述
+                            Messages.Message("所有描述已重置".Translate(), MessageTypeDefOf.PositiveEvent); // 显示成功消息
+                        })
+                        });
+                    }
                 }
             }
         }
 
         private static Command_Action CreateGizmo(string label, string description, System.Action action) =>
             new Command_Action // 创建一个 Gizmo 选项
-        {
-            defaultLabel = label.Translate(), // 设置选项的标签
-            defaultDesc = description.Translate(), // 设置选项的描述
-            action = action, // 设置选项的执行操作
-            icon = ContentFinder<Texture2D>.Get("UI/Buttons/Rename") // 设置选项的图标
-        };
+            {
+                defaultLabel = label.Translate(), // 设置选项的标签
+                defaultDesc = description.Translate(), // 设置选项的描述
+                action = action, // 设置选项的执行操作
+                icon = ContentFinder<Texture2D>.Get("UI/Buttons/Rename") // 设置选项的图标
+            };
     }
 
     [HarmonyPatch(typeof(ITab_Art), "FillTab")] // 为 ITab_Art 类的 FillTab 方法添加 Harmony 补丁
